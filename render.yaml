@@ -28,7 +28,7 @@ services:
         fromService:
           name: omya-redis
           type: redis
-          property: connectionString   # ✅
+          property: connectionString
       - key: ALLOWED_HOSTS
         value: "omya-web.onrender.com,omyaai.com"
       - key: CSRF_TRUSTED_ORIGINS
@@ -51,7 +51,7 @@ services:
     buildFilter:
       paths:
         - "requirements.txt"
-        - "omya_v4/"
+        - "omya_v4"      # <- sans slash
         - "render.yaml"
         - "apt.yml"
 
@@ -80,16 +80,18 @@ services:
         fromService:
           name: omya-redis
           type: redis
-          property: connectionString   # ✅
+          property: connectionString
       - key: STRIPE_SECRET_KEY
         sync: false
 
-  # ✅ Redis doit être déclaré comme un service ici
   - type: redis
     name: omya-redis
     plan: starter
     region: frankfurt
     maxmemoryPolicy: noeviction
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: allow all (temp)
 
 databases:
   - name: omya-db
