@@ -28,7 +28,7 @@ services:
         fromService:
           name: omya-redis
           type: redis
-          property: connection_string
+          property: connectionString   # ✅
       - key: ALLOWED_HOSTS
         value: "omya-web.onrender.com,omyaai.com"
       - key: CSRF_TRUSTED_ORIGINS
@@ -39,7 +39,6 @@ services:
         value: "1"
       - key: STATIC_URL
         value: "/static/"
-      # Stripe (à renseigner dans le dashboard Render)
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
@@ -81,17 +80,18 @@ services:
         fromService:
           name: omya-redis
           type: redis
-          property: connection_string
-      # (si tes tâches utilisent Stripe, ajoute aussi les clés Stripe ici)
+          property: connectionString   # ✅
       - key: STRIPE_SECRET_KEY
         sync: false
 
-databases:
-  - name: omya-db
+  # ✅ Redis doit être déclaré comme un service ici
+  - type: redis
+    name: omya-redis
     plan: starter
     region: frankfurt
+    maxmemoryPolicy: noeviction
 
-redis:
-  - name: omya-redis
+databases:
+  - name: omya-db
     plan: starter
     region: frankfurt
