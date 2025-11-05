@@ -1,88 +1,32 @@
+# omya_v4/settings_prod.py
 import os
 from pathlib import Path
-import dj_database_url
 
+# Map des variables Render -> variables attendues par ton settings de base
+if os.environ.get("SECRET_KEY"):
+    os.environ["DJANGO_SECRET_KEY"] = os.environ["SECRET_KEY"]
+
+if os.environ.get("DEBUG") is not None:
+    # "0"/"1" -> "False"/"True"
+    os.environ["DJANGO_DEBUG"] = "True" if os.environ["DEBUG"] in ("1", "true", "True") else "False"
+
+if os.environ.get("ALLOWED_HOSTS"):
+    os.environ["DJANGO_ALLOWED_HOSTS"] = os.environ["ALLOWED_HOSTS"]
+
+if os.environ.get("CSRF_TRUSTED_ORIGINS"):
+    os.environ["DJANGO_TRUSTED_CSRF_ORIGINS"] = os.environ["CSRF_TRUSTED_ORIGINS"]
+
+# Timezone prod (Europe/Paris) si non fourni
+os.environ.setdefault("DJANGO_TIME_ZONE", "Europe/Paris")
+
+# Importe TOUT ton settings de base (apps, AUTH_USER_MODEL, allauth, etc.)
+from .settings import *  # noqa: E402,F401,F403
+
+# ---------- Overrides PROD ----------
 BASE_DIR = Path(__file__).resolve().parent.parent  # omya_v4/
 
-SECRET_KEY = os.environ["SECRET_KEY"]
-DEBUG = os.environ.get("DEBUG", "0") == "1"
-
-ALLOWED_HOSTS = [h for h in os.environ.get("ALLOWED_HOSTS", "").split(",") if h]
-CSRF_TRUSTED_ORIGINS = [h for h in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",") if h]
-
-# DB: Postgres Render
-DATABASES = {
-    "default": dj_database_url.parse(
-        os.environ["DATABASE_URL"],
-        conn_max_age=600,
-        ssl_require=True
-    )
-}
-
-# Static via WhiteNoise
-STATIC_URL = os.environ.get("STATIC_URL", "/static/")
-STATIC_ROOT = BASE_DIR.parent / "staticfiles"
-
-INSTALLED_APPS = [
-    # --- tes apps existantes ---
-    # 'accounts', 'commons', 'courses', 'subscriptions', ...
-    # Django
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
-    # Libs
-    "corsheaders",
-]
-
-MIDDLEWARE = [
-    "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
-    "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.messages.middleware.MessageMiddleware",
-]
-
-ROOT_URLCONF = "omya_v4.urls"
-WSGI_APPLICATION = "omya_v4.wsgi.application"
-
-# Templates (garde ta config existante si tu as des DIRS)
-TEMPLATES = [
-    {
-        "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR.parent / "templates"],
-        "APP_DIRS": True,
-        "OPTIONS": {
-            "context_processors": [
-                "django.template.context_processors.debug",
-                "django.template.context_processors.request",
-                "django.contrib.auth.context_processors.auth",
-                "django.contrib.messages.context_processors.messages",
-            ],
-        },
-    },
-]
-
-# Auth / Password validators par défaut (ou garde les tiens)
-
-# Redis (Celery + cache)
-REDIS_URL = os.environ.get("REDIS_URL")
-CELERY_BROKER_URL = REDIS_URL
-CELERY_RESULT_BACKEND = REDIS_URL
-CELERY_TIMEZONE = "Europe/Paris"
-
-# Fichiers utilisateurs : disque Render (simple)
-MEDIA_URL = "/media/"
-# IMPORTANT: ce chemin correspond au mountPath du render.yaml
-MEDIA_ROOT = Path("/opt/render/project/src/media")
-
-# Sécurité HTTPS
-SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", "1") == "1"
+# Forcer HTTPS en prod
+SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SECURE_HSTS_SECONDS = 31536000
@@ -91,17 +35,47 @@ SECURE_HSTS_PRELOAD = True
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 X_FRAME_OPTIONS = "DENY"
 
-# CORS (ajuste si front local)
-CORS_ALLOWED_ORIGINS = [h for h in os.environ.get("CORS_ALLOWED_ORIGINS", "").split(",") if h]
+# Static (WhiteNoise)
+STATIC_URL = os.environ.get("STATIC_URL", "static/")
+STATIC_ROOT = os.environ.get("STATIC_ROOT") or str(BASE_DIR.parent / "staticfiles")
+if "whitenoise.middleware.WhiteNoiseMiddleware" not in MIDDLEWARE:
+    # juste après SecurityMiddleware
+    MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# Stripe
-STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
-STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+# Media (disk Render si monté)
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.environ.get("MEDIA_ROOT") or "/opt/render/project/src/media"
 
-# Logging simple
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "handlers": {"console": {"class": "logging.StreamHandler"}},
-    "root": {"handlers": ["console"], "level": "INFO"},
-}
+# CORS (si activé côté env)
+if "corsheaders" not in INSTALLED_APPS:
+    INSTALLED_APPS.append("corsheaders")
+if "corsheaders.middleware.CorsMiddleware" not in MIDDLEWARE:
+    # avant CommonMiddleware
+    MIDDLEWARE.insert(2, "corsheaders.middleware.CorsMiddleware")
+# Valeurs déjà lues depuis DJANGO_TRUSTED_CSRF_ORIGINS / CORS_ALLOWED_ORIGINS via settings de base
+CORS_ALLOWED_ORIGINS = [o.strip() for o in os.environ.get("CORS_ALLOWED_ORIGINS", "").split(",") if o.strip()]
+
+# Redis / Celery (ton settings de base lit déjà REDIS_URL)
+REDIS_URL = os.environ.get("REDIS_URL", REDIS_URL)  # garde la valeur si déjà définie
+
+# Base de données (utilise dj-database-url pour SSL correct de Render)
+try:
+    import dj_database_url  # type: ignore
+
+    if os.environ.get("DATABASE_URL"):
+        DATABASES = {
+            "default": dj_database_url.parse(
+                os.environ["DATABASE_URL"],
+                conn_max_age=600,
+                ssl_require=True,
+            )
+        }
+except Exception:
+    # fallback sur ton parsing de base
+    pass
+
+# Stripe (déjà lus par ton settings de base, on s'assure qu'ils existent)
+STRIPE_PUBLIC_KEY = os.environ.get("STRIPE_PUBLIC_KEY", STRIPE_PUBLIC_KEY if "STRIPE_PUBLIC_KEY" in globals() else None)
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", STRIPE_SECRET_KEY if "STRIPE_SECRET_KEY" in globals() else "")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", STRIPE_WEBHOOK_SECRET if "STRIPE_WEBHOOK_SECRET" in globals() else "")
