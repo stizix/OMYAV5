@@ -16,8 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from django.urls import path, include
+from django.urls import path, include 
+from django.http import HttpResponse
 
+def health(_request):
+    return HttpResponse("ok")
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,4 +28,6 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),  # 👈 new line
     path("subscription/", include("subscriptions.urls")),
     path("", include("courses.urls")),
+    path("health/", health),  # ✅ endpoint pour Render
+
 ]
