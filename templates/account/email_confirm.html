@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}Confirm your email | OMYA{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 px-6 py-12">
+  <div class="max-w-md w-full bg-white shadow-xl rounded-3xl border border-slate-200 p-8 text-center">
+    {% if confirmation %}
+      <h1 class="text-3xl font-bold text-violet-700 mb-4">Confirm your email</h1>
+      <p class="text-slate-600 mb-6">
+        Hi <span class="font-semibold text-violet-600">{{ confirmation.email_address.user.username|default:"there" }}</span> 👋,<br>
+        please confirm your email to activate your <span class="font-semibold">OMYA</span> account.
+      </p>
+      <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
+        {% csrf_token %}
+        <button type="submit"
+                class="mt-4 px-6 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold rounded-xl shadow-md hover:scale-105 transition-transform duration-200">
+          ✅ Confirm my email
+        </button>
+      </form>
+    {% else %}
+      <h1 class="text-3xl font-bold text-violet-700 mb-4">Email already confirmed</h1>
+      <p class="text-slate-600 mb-6">
+        Your email address has already been verified.<br>
+        You can now log in to <span class="font-semibold">OMYA</span>.
+      </p>
+      <a href="{% url 'login' %}"
+         class="inline-block px-6 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold rounded-xl shadow-md hover:scale-105 transition-transform duration-200">
+        🚀 Go to Login
+      </a>
+    {% endif %}
+  </div>
+  <p class="mt-8 text-slate-400 text-sm">© {{ now|date:"Y" }} OMYA — All rights reserved</p>
+</div>
+{% endblock %}

@@ -1,0 +1,97 @@
+services:
+  - type: web
+    name: omya-web
+    env: python
+    region: frankfurt
+    plan: starter
+    buildCommand: |
+      pip install -U pip wheel
+      pip install -r requirements.txt
+      python manage.py collectstatic --noinput
+      python manage.py migrate --noinput
+    startCommand: gunicorn omya_v4.wsgi:application --bind 0.0.0.0:10000 --workers=3 --timeout=120
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: DJANGO_SETTINGS_MODULE
+        value: omya_v4.settings_prod
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "0"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: omya-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: omya-redis
+          type: redis
+          property: connection_string
+      - key: ALLOWED_HOSTS
+        value: "omya-web.onrender.com,omyaai.com"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://omya-web.onrender.com,https://omyaai.com"
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://omyaai.com"
+      - key: SECURE_SSL_REDIRECT
+        value: "1"
+      - key: STATIC_URL
+        value: "/static/"
+      # Stripe (à renseigner dans le dashboard Render)
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+    disk:
+      name: omya-media
+      mountPath: /opt/render/project/src/media
+      sizeGB: 5
+    healthCheckPath: "/health/"
+    buildFilter:
+      paths:
+        - "requirements.txt"
+        - "omya_v4/"
+        - "render.yaml"
+        - "apt.yml"
+
+  - type: worker
+    name: omya-worker
+    env: python
+    region: frankfurt
+    plan: starter
+    buildCommand: |
+      pip install -U pip wheel
+      pip install -r requirements.txt
+    startCommand: celery -A omya_v4 worker -l INFO --concurrency=2
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: DJANGO_SETTINGS_MODULE
+        value: omya_v4.settings_prod
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: omya-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: omya-redis
+          type: redis
+          property: connection_string
+      # (si tes tâches utilisent Stripe, ajoute aussi les clés Stripe ici)
+      - key: STRIPE_SECRET_KEY
+        sync: false
+
+databases:
+  - name: omya-db
+    plan: starter
+    region: frankfurt
+
+redis:
+  - name: omya-redis
+    plan: starter
+    region: frankfurt

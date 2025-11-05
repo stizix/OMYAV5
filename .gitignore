@@ -1,0 +1,7 @@
+.venv/
+.uploads/
+.venv_wsl/
+.env
+venv/
+venv_wsl/
+uploads/

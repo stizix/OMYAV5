@@ -1,0 +1,538 @@
+{% extends 'base.html' %}
+{% load markdown_extras %}
+{% block content %}
+<!-- Page Background + Progress -->
+<div class="fixed inset-x-0 top-0 h-1 z-40">
+  <div id="reading-progress" class="h-full bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 w-0 transition-[width] duration-200"></div>
+</div>
+
+<div class="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Breadcrumb + Back -->
+    <div class="flex items-center justify-between mb-4">
+      <nav class="text-sm text-slate-500 dark:text-slate-400" aria-label="Breadcrumb">
+        <ol class="flex items-center gap-2">
+          <li><a href="{% url 'account_page' %}" class="hover:text-slate-800 dark:hover:text-slate-200">Tableau de bord</a></li>
+          <li class="text-slate-400">/</li>
+          <li class="font-medium text-slate-700 dark:text-slate-200 truncate max-w-[40ch]">{{ course.title }}</li>
+        </ol>
+      </nav>
+      <a href="{% url 'account_page' %}" class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+        <span class="text-lg">←</span>
+        <span>Retour</span>
+      </a>
+    </div>
+
+<!-- Header Card -->
+<div class="relative overflow-hidden rounded-2xl bg-white/80 dark:bg-slate-900/60 backdrop-blur shadow-sm ring-1 ring-slate-200/70 dark:ring-slate-800 header-card">
+  <!-- calque décoratif (click-through) -->
+  <div class="absolute inset-0 -z-10 opacity-70 header-decor [mask-image:radial-gradient(400px_200px_at_0_0,black,transparent)]">
+    <div class="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-gradient-to-tr from-indigo-500/30 to-fuchsia-500/30 blur-3xl"></div>
+  </div>
+
+  <div class="p-6 md:p-8">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">{{ course.title }}</h1>
+        {% if course.description %}
+        <p class="mt-2 text-slate-600 dark:text-slate-300 max-w-2xl">{{ course.description }}</p>
+        {% endif %}
+        <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <span class="inline-flex items-center gap-1 rounded-full border border-slate-200 dark:border-slate-700 px-2.5 py-1">📚 Cours</span>
+          <span id="read-time" class="inline-flex items-center gap-1 rounded-full border border-slate-200 dark:border-slate-700 px-2.5 py-1">⏱️ ~1h</span>
+          <span class="inline-flex items-center gap-1 rounded-full border border-slate-200 dark:border-slate-700 px-2.5 py-1">🗓️ Mis à jour : {{ course.updated_at|date:'d/m/Y' }}</span>
+        </div>
+      </div>
+
+      <!-- actions au-dessus de tout -->
+      <div id="header-actions" class="flex items-center gap-2 relative z-50">
+        <a href="{% url 'rename_course' course.id %}" class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition">✏️ Renommer</a>
+        <a href="{% url 'delete_course' course.id %}" class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition">🗑️ Supprimer</a>
+      </div>
+    </div>
+
+
+        <!-- Tabs -->
+        <div class="mt-6">
+          <div class="relative">
+            <nav class="grid grid-cols-3 text-sm font-semibold rounded-xl bg-slate-50 dark:bg-slate-800 p-1" aria-label="Tabs">
+              <button data-tab="course" class="tab-btn premium active">Cours</button>
+              <button data-tab="qcm" class="tab-btn premium">QCM</button>
+              <button data-tab="exercises" class="tab-btn premium">Exercices</button>
+            </nav>
+            <div id="tab-underline" class="absolute left-1 top-[42px] h-0.5 w-[calc(33.333%-0.5rem)] bg-gradient-to-r from-indigo-500 to-fuchsia-500 rounded transition-all"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Body: Sidebar + Content -->
+    <div class="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Sidebar TOC -->
+      <aside class="lg:col-span-3">
+        <div class="sticky top-20 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 backdrop-blur p-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-bold text-slate-700 dark:text-slate-200">Sommaire</h2>
+            <button id="toc-toggle" class="lg:hidden text-xs px-2 py-1 rounded-lg border">Afficher</button>
+          </div>
+          <nav id="toc" class="mt-3 space-y-2 text-sm max-h-[60vh] overflow-auto"></nav>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="lg:col-span-9 space-y-6">
+        <!-- Course -->
+        <section id="course-content" class="tab-content rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/60 backdrop-blur p-6 md:p-8 prose prose-slate dark:prose-invert max-w-none">
+          {{ course.course_markdown|markdown|safe }}
+        </section>
+
+        <!-- QCM -->
+        <section id="qcm-content" class="tab-content hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/60 backdrop-blur p-6 md:p-8">
+          <div class="flex items-center justify-between mb-4">
+            <div class="text-sm text-slate-600 dark:text-slate-300">Score: <span id="qcm-score" class="font-bold">0</span></div>
+            <div class="w-1/2 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden"><div id="qcm-progress" class="h-full w-0 bg-gradient-to-r from-indigo-500 to-fuchsia-500"></div></div>
+          </div>
+          <div id="qcm-interactive" class="space-y-4"></div>
+          <pre id="qcm-raw" class="hidden">{{ course.qcm_markdown }}</pre>
+        </section>
+
+        <!-- Exercises -->
+        <section id="exercises-content" class="tab-content hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/60 backdrop-blur p-6 md:p-8 prose prose-slate dark:prose-invert max-w-none">
+          {{ course.exercises_markdown|markdown|safe }}
+        </section>
+      </main>
+    </div>
+
+    <!-- Footer CTA -->
+    <div class="mt-10">
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-gradient-to-r from-indigo-50 to-fuchsia-50 dark:from-indigo-950/30 dark:to-fuchsia-950/30 p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white">Besoin d'un export propre du cours ?</h3>
+          <p class="text-slate-600 dark:text-slate-300 text-sm">Téléchargez en PDF/Markdown et partagez avec votre équipe.</p>
+        </div>
+        <div class="flex gap-2">
+          <button id="btn-print" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-white/60 dark:hover:bg-slate-800">🖨️ Imprimer</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Styles for tabs and prose tweaks -->
+<style>
+  :root{
+    --brand:#1e3a8a;          /* bleu demandé */
+    --bg:#f7f8fb;
+    --card:#ffffff;
+    --ink:#0f172a;
+    --muted:#475569;
+    --ring:#e2e8f0;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0b1220;
+      --card:#0f172a;
+      --ink:#e5e7eb;
+      --muted:#94a3b8;
+      --ring:#1f2937;
+    }
+  }
+
+  /* Page */
+  body{background:var(--bg);}
+  .wrap{max-width:1100px;margin:0 auto;padding:24px;}
+  .card{
+    background:var(--card); border:1px solid var(--ring); border-radius:16px;
+    box-shadow:0 6px 20px rgba(2,6,23,.04); overflow:hidden;
+  }
+  .card-pad{padding:24px;}
+  .header-chip{
+    display:inline-flex;align-items:center;gap:.4rem;
+    padding:.35rem .6rem;border-radius:999px;border:1px solid var(--ring);
+    font-size:.75rem;color:var(--muted)
+  }
+
+  /* Tabs */
+  .tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;background:#eef2ff66;padding:.5rem;border-radius:12px}
+  .tab-btn{border:0;border-radius:10px;padding:.6rem 1rem;background:transparent;color:#64748b;cursor:pointer;font-weight:600}
+  .tab-btn.active{background:#fff;color:var(--ink);box-shadow:0 1px 0 rgba(0,0,0,.06)}
+  .tab-content{display:none}
+  .tab-content.active{display:block}
+
+  /* Prose lisible (cours/exos) */
+  .prose{
+    font-family: ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink); line-height:1.8; font-size:1.02rem;
+    max-width:75ch; margin:auto; /* colonne étroite = confort */
+  }
+  .prose h1,.prose h2,.prose h3{line-height:1.25;margin:1.4em 0 .6em;font-weight:800;color:var(--ink)}
+  .prose h1{font-size:2rem;border-left:6px solid var(--brand);padding-left:.6rem}
+  .prose h2{font-size:1.5rem;border-left:4px solid var(--brand);padding-left:.5rem}
+  .prose h3{font-size:1.25rem;color:var(--ink)}
+  .prose p{margin:.9em 0}
+  .prose ul,.prose ol{margin:.9em 0;padding-left:1.2em}
+  .prose blockquote{
+    margin:1em 0;padding:1em;border-left:4px solid var(--brand);
+    background:linear-gradient(90deg,rgba(30,58,138,.06),transparent)
+  }
+  .prose code{background:#f1f5f9;padding:.15em .35em;border-radius:.35em}
+  .prose pre{background:#0b1220;color:#e5e7eb;padding:1em;border-radius:12px;overflow:auto;position:relative}
+  .code-copy{
+    position:absolute;top:.5rem;right:.5rem;font-size:12px;padding:4px 8px;
+    border-radius:8px;border:1px solid rgba(148,163,184,.4);background:rgba(255,255,255,.8);cursor:pointer
+  }
+
+  /* Sommaire */
+  .toc{max-height:60vh;overflow:auto;margin-top:.5rem}
+  .toc a{display:block;padding:.25rem .25rem;color:var(--muted);text-decoration:none;border-radius:6px}
+  .toc a:hover{background:rgba(30,58,138,.07);color:var(--ink)}
+  .toc a.is-active{color:var(--brand);font-weight:700}
+
+  /* QCM */
+  .qcm-card{border:1px solid var(--ring);border-radius:14px;padding:18px}
+  .qcm-choice{
+    display:flex;gap:.6rem;align-items:flex-start;
+    padding:.65rem .75rem;border:1px solid var(--ring);border-radius:10px;cursor:pointer
+  }
+  .qcm-choice:hover{background:rgba(30,58,138,.05)}
+  .qcm-bad{border-color:#fecaca}
+  .qcm-good{border-color:#bbf7d0}
+
+  .btn{display:inline-block;border:1px solid var(--ring);border-radius:12px;padding:.55rem 1rem;background:#fff;cursor:pointer}
+  .btn-primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .btn-primary:hover{filter:brightness(1.05)}
+  .btn-ghost{background:transparent}
+
+  /* Underline (tabs) */
+  #tab-underline{height:3px;background:linear-gradient(90deg,var(--brand),#6d28d9);border-radius:999px;position:absolute;left:8px;top:42px;width:calc(33.333% - 16px);transition:.25s}
+  /* Keep header card as stacking context */
+.header-card { position: relative; }
+
+/* Your actions container — add this id in the HTML if not present */
+#header-actions { position: relative; z-index: 50; }
+
+/* Tabs / underline must not intercept clicks */
+nav[aria-label="Tabs"] { position: relative; z-index: 10; }
+#tab-underline { pointer-events: none; z-index: 0; }
+
+/* Any decorative gradients in the header should ignore pointer */
+.header-decor, .header-bg, .header-glow { pointer-events: none; }
+
+/* Safety: nothing should sit invisibly over the header */
+.header-card > * { pointer-events: auto; }
+
+</style>
+
+
+
+<!-- Highlight.js for code blocks -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>document.addEventListener('DOMContentLoaded', () => { document.querySelectorAll('pre code').forEach(el => { hljs.highlightElement(el); });});</script>
+<script>
+(function () {
+  const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+  const $  = (s, r=document) => r.querySelector(s);
+
+  const COURSE_ID = "{{ course.id }}";
+
+  /* Tabs (clairement visibles) */
+  const tabs = $$('.tab-btn');
+  const underline = $('#tab-underline');
+  function activateTab(name){
+    $$('.tab-content').forEach(c=>c.classList.remove('active'));
+    const el = document.getElementById(name+'-content');
+    if(el) el.classList.add('active');
+    tabs.forEach(b=>b.classList.remove('active'));
+    const btn = tabs.find(b=>b.dataset.tab===name);
+    if(btn){
+      btn.classList.add('active');
+      // déplacer l’underline
+      if(underline && btn.parentElement){
+        const idx = tabs.indexOf(btn);
+        const parentW = btn.parentElement.clientWidth;
+        const colW = (parentW - 16) / 3;
+        underline.style.left  = (8 + idx * colW)+'px';
+        underline.style.width = (colW - 16)+'px';
+      }
+    }
+    try{ localStorage.setItem('omya.activeTab.'+COURSE_ID, name); }catch(e){}
+  }
+  tabs.forEach(b=>b.addEventListener('click',()=>activateTab(b.dataset.tab)));
+  requestAnimationFrame(()=>{
+    let initial='course';
+    try{ const s=localStorage.getItem('omya.activeTab.'+COURSE_ID); if(s) initial=s; }catch(e){}
+    activateTab(initial);
+  });
+
+  /* Sommaire auto + highlight */
+  const toc = $('#toc');
+  const courseContent = $('#course-content');
+  function buildTOC(){
+    if(!toc || !courseContent) return;
+    toc.innerHTML='';
+    const hs = $$('.prose h1, .prose h2, .prose h3', courseContent);
+    hs.forEach((h,i)=>{
+      if(!h.id) h.id='h-'+i;
+      const a=document.createElement('a');
+      a.href='#'+h.id; a.textContent=h.textContent;
+      if(h.tagName==='H2') a.style.paddingLeft='.6rem';
+      if(h.tagName==='H3') a.style.paddingLeft='1rem';
+      toc.appendChild(a);
+    });
+    const io = new IntersectionObserver(entries=>{
+      entries.forEach(e=>{
+        const id=e.target.id;
+        const link = toc.querySelector(`a[href="#${id}"]`);
+        if(!link) return;
+        if(e.isIntersecting) link.classList.add('is-active'); else link.classList.remove('is-active');
+      });
+    },{rootMargin:'-40% 0px -55% 0px',threshold:0});
+    hs.forEach(h=>io.observe(h));
+  }
+  buildTOC();
+
+  /* Copy buttons dans les <pre> */
+  $$('.prose pre').forEach(pre=>{
+    const btn=document.createElement('button'); btn.className='code-copy'; btn.textContent='Copier';
+    btn.onclick=async ()=>{ try{await navigator.clipboard.writeText(pre.innerText.trim()); btn.textContent='Copié!'; setTimeout(()=>btn.textContent='Copier',1200);}catch(e){} };
+    pre.appendChild(btn);
+  });
+
+  /* -------- QCM -------- */
+
+  // Parser plus tolérant : accepte "A)", "A.", tirets ou astérisques, "Answer:" ou "Réponse:"
+  function parseQCM(text){
+    const qs=[]; const lines=(text||'').split(/\r?\n/);
+    for(let i=0;i<lines.length;i++){
+      const qm = lines[i].match(/^\s*\d+\.\s*\*\*?Question:?\\*?\*\*?\s*[:\-]?\s*(.+)$/i);
+      if(!qm) continue;
+      const q = { question: qm[1].trim(), choices:[], answer:null, explanation:null };
+
+      // 4 lignes suivantes = choix (tolère "- A) foo" | "* A. foo")
+      for(let j=1;j<=4;j++){
+        const c = lines[i+j]?.match(/^\s*[-*]\s*([A-D])[\)\.]?\s+(.+)$/i);
+        if(c) q.choices.push({letter:c[1].toUpperCase(), text:c[2]});
+      }
+
+      // Ligne de réponse (Answer|Réponse)
+      const a = lines[i+5]?.match(/^\s*[-*]\s*(?:\*\*?)?(?:Answer|Réponse)\s*:?(\*\*?)?\s*([A-D])\s*$/i);
+      if(a) q.answer = a[2].toUpperCase();
+
+      // Explication optionnelle
+      const e = lines[i+6]?.match(/^\s*[-*]\s*(?:Explanation|Explication)\s*:\s*(.+)$/i);
+      if(e) q.explanation = e[1];
+
+      if(q.choices.length===4 && q.answer){ qs.push(q); }
+      i += 6;
+    }
+    return qs;
+  }
+
+  function initQCM(){
+    const raw = $('#qcm-raw'); if(!raw) return;
+    let qs = parseQCM(raw.textContent || raw.innerText || '');
+    if(qs.length===0){
+      // fallback très permissif (sépare par lignes vides)
+      const chunks = (raw.textContent||'').split(/\n\s*\n/);
+      qs = chunks.map((blk)=>{
+        const m = blk.match(/Question.*?:\s*(.+)/i);
+        const a = blk.match(/(?:Answer|Réponse).*?:\s*([A-D])/i);
+        const choices = [];
+        const choiceLines = blk.split(/\n/).filter(l=>/^\s*[-*]\s*[A-D]/i.test(l));
+        choiceLines.slice(0,4).forEach(l=>{
+          const c = l.match(/^\s*[-*]\s*([A-D])[\)\.]?\s+(.+)$/i);
+          if(c) choices.push({letter:c[1].toUpperCase(), text:c[2]});
+        });
+        if(m && a && choices.length===4){ return {question:m[1].trim(), choices, answer:a[1].toUpperCase(), explanation:null}; }
+        return null;
+      }).filter(Boolean);
+    }
+
+    const key = 'omya.qcm.'+COURSE_ID;
+    let state = { idx:0, score:0, answers:{} };
+    try{ const s=localStorage.getItem(key); if(s) state=JSON.parse(s);}catch(e){}
+    const wrap = $('#qcm-interactive');
+    const scoreEl = $('#qcm-score');
+    const prog = $('#qcm-progress');
+
+    function save(){ try{ localStorage.setItem(key, JSON.stringify(state)); }catch(e){} }
+
+    function pill(i,idx){ return `<span style="display:inline-block;height:8px;width:8px;border-radius:999px;margin-left:4px;background:${ i<idx ? 'var(--brand)' : (i===idx? '#94a3b8':'#e2e8f0')}"></span>`; }
+
+    function render(idx){
+      const q = qs[idx];
+      if(!q){ return renderEnd(); }
+      if(scoreEl) scoreEl.textContent = state.score;
+      if(prog)    prog.style.width   = (idx/qs.length*100)+'%';
+
+      const selected = state.answers[idx];
+
+      wrap.innerHTML = `
+        <div class="qcm-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div class="text-sm" style="color:var(--muted)">Question ${idx+1} / ${qs.length}</div>
+            <div>${Array.from({length:qs.length}).map((_,i)=>pill(i,idx)).join('')}</div>
+          </div>
+          <h3 style="margin:.25rem 0 1rem;font-weight:700;color:var(--ink)">${q.question}</h3>
+          <form id="qcm-form" class="qcm-form" style="display:block">
+            ${q.choices.map(c=>`
+              <label class="qcm-choice ${selected?'':'hover'}">
+                <input type="radio" name="choice" value="${c.letter}" ${selected===c.letter?'checked':''} style="margin-top:.35rem">
+                <span><b>${c.letter})</b> ${c.text}</span>
+              </label>
+            `).join('')}
+            <div style="display:flex;gap:.5rem;align-items:center;margin-top:.8rem;">
+              <!-- ⚠️ Bouton toujours visible, même sans Tailwind -->
+              <button type="submit" class="btn btn-primary" id="btn-validate">Valider</button>
+              ${idx>0?'<button type="button" class="btn" id="btn-prev">Précédent</button>':''}
+              ${idx<qs.length-1?'<button type="button" class="btn" id="btn-skip">Passer</button>':''}
+              <button type="button" class="btn btn-ghost" id="btn-reset" style="margin-left:auto">Réinitialiser</button>
+            </div>
+          </form>
+          <div id="qcm-feedback" style="margin-top:.6rem;font-size:.95rem;"></div>
+        </div>`;
+
+      $('#btn-prev')?.addEventListener('click',()=>{ state.idx=Math.max(0,idx-1); render(state.idx); });
+      $('#btn-skip')?.addEventListener('click',()=>{ state.idx=Math.min(qs.length-1,idx+1); render(state.idx); });
+      $('#btn-reset')?.addEventListener('click',()=>{ state={idx:0,score:0,answers:{}}; save(); render(0); });
+
+      $('#qcm-form').addEventListener('submit',(e)=>{
+        e.preventDefault();
+        const choice = wrap.querySelector('input[name="choice"]:checked');
+        const fb = $('#qcm-feedback');
+        if(!choice){ fb.innerHTML='<span style="color:#dc2626">Sélectionnez une réponse.</span>'; return; }
+        if(!selected){
+          state.answers[idx]=choice.value;
+          if(choice.value===q.answer){ state.score++; fb.innerHTML='<span style="color:#059669;font-weight:700">Bonne réponse !</span>'; wrap.querySelectorAll('.qcm-choice').forEach(l=>{ if(l.querySelector('input')?.value===q.answer) l.classList.add('qcm-good'); }); }
+          else{
+            fb.innerHTML=`<span style="color:#dc2626;font-weight:700">Mauvaise réponse.</span> Bonne réponse : <b>${q.answer}</b>${q.explanation?'<br><em>'+q.explanation+'</em>':''}`;
+            wrap.querySelectorAll('.qcm-choice').forEach(l=>{
+              const v=l.querySelector('input')?.value;
+              if(v===q.answer) l.classList.add('qcm-good');
+              if(v===choice.value) l.classList.add('qcm-bad');
+            });
+          }
+          save();
+        }
+        setTimeout(()=>{ if(idx+1<qs.length){ state.idx=idx+1; render(state.idx); } else { renderEnd(); } }, 900);
+      });
+    }
+
+    function renderEnd(){
+      if(prog) prog.style.width='100%';
+      wrap.innerHTML = `
+        <div style="text-align:center;padding:24px" class="qcm-card">
+          <div style="font-size:1.35rem;font-weight:800;margin-bottom:.3rem">QCM terminé ! 🎉</div>
+          <div style="font-size:1.1rem;margin-bottom:1rem">Score : <span style="color:var(--brand);font-weight:800">${state.score} / ${qs.length}</span></div>
+          <div style="display:flex;justify-content:center;gap:.5rem">
+            <button id="qcm-retry" class="btn">Recommencer</button>
+            <button id="qcm-review" class="btn btn-primary">Revoir les questions</button>
+          </div>
+        </div>`;
+      $('#qcm-retry').addEventListener('click',()=>{ state={idx:0,score:0,answers:{}}; save(); render(0); });
+      $('#qcm-review').addEventListener('click',()=>reviewMode());
+    }
+
+    function reviewMode(){
+      wrap.innerHTML = qs.map((q,i)=>{
+        const given = state.answers[i];
+        const ok = given===q.answer;
+        return `
+          <div class="qcm-card" style="margin-bottom:.8rem;${ok?'border-color:#bbf7d0;':'border-color:#fecaca;'}">
+            <div class="text-sm" style="color:var(--muted);margin-bottom:.35rem">Q${i+1}. ${q.question}</div>
+            <ul class="text-sm" style="margin-left:1rem;list-style:disc">
+              ${q.choices.map(c=>`<li class="${c.letter===q.answer?'':' '}" style="${c.letter===q.answer?'font-weight:700;color:var(--brand)':''}">
+                ${c.letter}) ${c.text} ${c.letter===given?' ← votre choix':''}
+              </li>`).join('')}
+            </ul>
+            ${q.explanation?`<div style="margin-top:.35rem;color:var(--muted)">💡 ${q.explanation}</div>`:''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    render(state.idx||0);
+  }
+
+  initQCM();
+})();
+</script>
+<style id="omya-course-light-override">
+  /* Force LIGHT like your homepage */
+  html, body { color-scheme: light !important; }
+  :root{
+    --brand:#1e3a8a;        /* your blue */
+    --bg:#f7f9fc;           /* page background */
+    --card:#ffffff;         /* cards */
+    --ink:#1f2937;          /* primary text */
+    --muted:#475569;        /* secondary text */
+    --ring:#e5e7eb;         /* borders */
+    --soft:#eef2ff;         /* soft blue surfaces */
+  }
+
+  /* Page + cards */
+  body{ background:var(--bg) !important; color:var(--ink) !important; }
+  .card, .qcm-card, #course-content, #exercises-content{
+    background:var(--card) !important; border:1px solid var(--ring) !important; border-radius:16px;
+    box-shadow:0 6px 22px rgba(2,6,23,.05);
+  }
+
+  /* Tabs: blue accent, readable */
+  .tabs{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem;
+    background:var(--soft) !important; padding:.5rem; border-radius:12px;
+    border:1px solid var(--ring);
+  }
+  .tab-btn{ border:0; border-radius:10px; padding:.6rem 1rem; font-weight:700; color:var(--muted); background:transparent; }
+  .tab-btn.active{
+    color:#fff !important;
+    background:linear-gradient(90deg,var(--brand),#3b82f6) !important;
+    box-shadow:0 2px 6px rgba(30,58,138,.25);
+  }
+  #tab-underline{ display:none !important; } /* we color the active tab instead */
+
+  /* TOC: visible and on-brand */
+  .toc{
+    background:var(--soft) !important; border:1px solid var(--ring) !important; border-radius:12px; padding:.5rem;
+  }
+  .toc a{ display:block; padding:.4rem .5rem; color:var(--muted); border-radius:8px; text-decoration:none; }
+  .toc a:hover{ background:rgba(30,58,138,.10); color:var(--ink); }
+  .toc a.is-active{ background:var(--brand); color:#fff; font-weight:800; }
+
+  /* Prose (cours/exos): airy & readable */
+  .prose{ max-width:72ch; margin:auto; font-size:1.05rem; line-height:1.85; color:var(--ink) !important; }
+  .prose h1,.prose h2,.prose h3{ color:var(--ink) !important; line-height:1.25; margin:1.6em 0 .7em; font-weight:800; }
+  .prose h1{ font-size:2rem; border-left:6px solid var(--brand); padding-left:.6rem; }
+  .prose h2{ font-size:1.5rem; border-left:4px solid #3b82f6; padding-left:.5rem; }
+  .prose h3{ font-size:1.2rem; color:#334155 !important; }
+  .prose p{ margin:1em 0; }
+  .prose ul,.prose ol{ margin:1em 0; padding-left:1.25em; }
+  .prose blockquote{
+    border-left:4px solid var(--brand);
+    background:linear-gradient(90deg,rgba(30,58,138,.08),transparent);
+    padding:1em; border-radius:10px;
+  }
+  .prose code{ background:#f1f5f9; padding:.15em .35em; border-radius:.35em; }
+  .prose pre{ background:#0b1220; color:#e5e7eb; border-radius:12px; }
+
+  /* QCM buttons & choices */
+  .btn{ display:inline-block; border:1px solid var(--ring); border-radius:12px; padding:.55rem 1rem; background:#fff; color:var(--ink); }
+  .btn-primary{ background:var(--brand) !important; border-color:var(--brand) !important; color:#fff !important; font-weight:700; }
+  .btn-primary:hover{ filter:brightness(1.08); }
+  .qcm-choice{ border:1px solid var(--ring); background:#fff; }
+  .qcm-choice:hover{ background:rgba(30,58,138,.06); }
+  .qcm-good{ border-color:#16a34a !important; background:#f0fdf4 !important; }
+  .qcm-bad{  border-color:#dc2626 !important; background:#fef2f2 !important; }
+
+  /* Header chips / small muted text */
+  .header-chip, .text-sm, .muted, .text-muted { color:var(--muted) !important; }
+
+  /* Kill previous dark overrides from earlier snippet */
+  @media (prefers-color-scheme: dark){ :root{ --bg:#f7f9fc; --card:#ffffff; --ink:#1f2937; --muted:#475569; --ring:#e5e7eb; } }
+</style>
+
+{% endblock content %}
+

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-lg mx-auto mt-24 p-8 bg-white rounded-2xl shadow-lg">
+    <h1 class="text-2xl font-bold mb-6">Renommer le cours</h1>
+    <form method="post">
+        {% csrf_token %}
+        <label class="block mb-2 font-semibold">Nouveau titre</label>
+        <input type="text" name="title" value="{{ course.title }}" class="w-full p-2 border rounded mb-4" required>
+        <label class="block mb-2 font-semibold">Nouvelle description (optionnelle)</label>
+        <textarea name="description" class="w-full p-2 border rounded mb-4">{{ course.description }}</textarea>
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-all duration-300">Enregistrer</button>
+        <a href="{% url 'course_detail' course.id %}" class="ml-4 text-blue-600 hover:underline">Annuler</a>
+    </form>
+</div>
+{% endblock %} 

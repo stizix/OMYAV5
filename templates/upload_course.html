@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-xl mx-auto mt-24 p-8 bg-white rounded-2xl shadow-lg">
+  <h1 class="text-2xl font-bold mb-2">Générer un cours (Audio ou Texte)</h1>
+  <p class="mb-6 text-gray-600">
+    Après l’envoi, le traitement se fait en arrière-plan. Tu peux quitter la page : le cours apparaîtra dans ton espace une fois prêt.
+  </p>
+
+  {% if messages %}
+    <ul class="mb-6 space-y-2">
+      {% for message in messages %}
+        <li class="px-4 py-2 rounded 
+                   {% if message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+          {{ message }}
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  <!-- Styles rapides pour inputs/textarea/file -->
+  <style>
+    input[type="text"], textarea, input[type="file"], select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.75rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input[type="text"]:focus, textarea:focus, input[type="file"]:focus, select:focus {
+      outline: none;
+      border-color: #10b981;
+      box-shadow: 0 0 0 3px rgba(16,185,129,0.3);
+    }
+    .segmented input { display:none; }
+    .segmented label {
+      flex:1; text-align:center; padding:0.6rem 0.75rem; cursor:pointer;
+      border:1px solid #e5e7eb; border-radius:0.75rem;
+    }
+    .segmented input:checked + label {
+      background:#10b981; color:white; border-color:#10b981;
+      box-shadow:0 1px 2px rgba(0,0,0,0.06), 0 0 0 3px rgba(16,185,129,0.25) inset;
+    }
+  </style>
+
+  <form method="post" enctype="multipart/form-data" class="space-y-6" id="course-form">
+    {% csrf_token %}
+
+    <!-- Titre -->
+    <div>
+      <label class="block mb-2 font-medium text-gray-700">{{ form.title.label }}</label>
+      {{ form.title }}
+    </div>
+
+    <!-- Description -->
+    <div>
+      <label class="block mb-2 font-medium text-gray-700">{{ form.description.label }}</label>
+      {{ form.description }}
+      <p class="mt-1 text-xs text-gray-500">Optionnel — s’affichera sur la page du cours.</p>
+    </div>
+
+    <!-- Sélecteur de source -->
+    <div>
+      <p class="block mb-2 font-medium text-gray-700">Source</p>
+      <div class="segmented flex gap-2" role="tablist" aria-label="Sélection de la source">
+        <input type="radio" id="mode-audio" name="source_mode" value="audio" checked>
+        <label for="mode-audio">Audio</label>
+        <input type="radio" id="mode-text" name="source_mode" value="text">
+        <label for="mode-text">Texte</label>
+      </div>
+      <p class="mt-2 text-xs text-gray-500">Choisis <b>une seule</b> source. Si JavaScript est désactivé, ne remplis qu’un bloc.</p>
+    </div>
+
+    <!-- Bloc AUDIO -->
+    <div id="block-audio" class="space-y-2">
+      <label class="block mb-2 font-medium text-gray-700">{{ form.audio_file.label }}</label>
+      <!-- on force l'accept pour UX, Django validera côté serveur -->
+      <input type="file" name="{{ form.audio_file.name }}" accept="audio/*">
+      <p class="text-xs text-gray-500">
+        Formats usuels (mp3, wav, m4a…). Le coût en crédits sera calculé selon la durée.
+      </p>
+    </div>
+
+    <!-- Bloc TEXTE -->
+    <div id="block-text" class="space-y-4 hidden">
+      <div>
+        <label class="block mb-2 font-medium text-gray-700">Coller un texte</label>
+        {{ form.text_input }}
+        <p class="mt-1 text-xs text-gray-500">
+          Colle tes notes brutes. Tu peux aussi fournir un fichier .txt ci-dessous (ne mets pas les deux).
+        </p>
+        <p id="text-stats" class="mt-1 text-xs text-gray-400"></p>
+      </div>
+
+      <div>
+        <label class="block mb-2 font-medium text-gray-700">Ou uploader un .txt</label>
+        <input type="file" name="{{ form.text_file.name }}" accept=".txt,text/plain">
+        <p class="mt-1 text-xs text-gray-500">UTF-8 recommandé.</p>
+      </div>
+    </div>
+ <!-- Champ Langue -->
+    <div>
+      <label class="block mb-2 font-medium text-gray-700">{{ form.language.label }}</label>
+      {{ form.language }}
+    </div>
+
+    <button
+      type="submit"
+      class="w-full py-3 bg-green-600 text-white font-semibold rounded-xl
+             hover:bg-green-700 transition-colors duration-300"
+    >
+      Envoyer
+    </button>
+  </form>
+
+  <a href="{% url 'account_page' %}" class="block mt-6 text-blue-600 hover:underline">
+    ← Retour à mon compte
+  </a>
+</div>
+
+<script>
+  (function(){
+    const modeAudio = document.getElementById('mode-audio');
+    const modeText  = document.getElementById('mode-text');
+    const blockAudio = document.getElementById('block-audio');
+    const blockText  = document.getElementById('block-text');
+
+    const textArea = document.querySelector('textarea[name="{{ form.text_input.name }}"]');
+    const textStats = document.getElementById('text-stats');
+    const fileTxt = document.querySelector('input[name="{{ form.text_file.name }}"]');
+    const fileAudio = document.querySelector('input[name="{{ form.audio_file.name }}"]');
+
+    function setMode() {
+      const isAudio = modeAudio.checked;
+      blockAudio.classList.toggle('hidden', !isAudio);
+      blockText.classList.toggle('hidden', isAudio);
+
+      // Quand on bascule de mode, on vide l’autre source pour éviter les ambiguïtés
+      if (isAudio) {
+        if (textArea) textArea.value = '';
+        if (fileTxt) fileTxt.value = '';
+      } else {
+        if (fileAudio) fileAudio.value = '';
+      }
+    }
+
+    // Estimation légère du “coût” côté client (indicatif)
+    function estimateTokens(s){
+      // approx: 1 token ~ 4 chars
+      return Math.max(1, Math.floor((s||'').length / 4));
+    }
+    function estimateSecondsFromTokens(tok){
+      // approx: ~3 tokens ≈ 1 seconde de parole
+      return Math.ceil(tok / 3);
+    }
+    function updateTextStats(){
+      if (!textArea || blockText.classList.contains('hidden')) return;
+      const txt = textArea.value || '';
+      const tokens = estimateTokens(txt);
+      const sec = estimateSecondsFromTokens(tokens);
+      textStats.textContent = txt.length
+        ? `~${tokens} tokens estimés → coût ≈ ${sec} s`
+        : '';
+    }
+
+    modeAudio.addEventListener('change', setMode);
+    modeText.addEventListener('change', setMode);
+    if (textArea) textArea.addEventListener('input', updateTextStats);
+
+    // Au submit, si texte + fichier txt sont remplis, on empêche (UX)
+    const form = document.getElementById('course-form');
+    form.addEventListener('submit', function(e){
+      const isAudio = modeAudio.checked;
+      if (isAudio) {
+        // audio obligatoire si mode audio
+        if (!fileAudio || !fileAudio.files || fileAudio.files.length === 0) {
+          alert("Sélectionne un fichier audio.");
+          e.preventDefault();
+          return;
+        }
+      } else {
+        const hasText = textArea && textArea.value.trim().length > 0;
+        const hasFile = fileTxt && fileTxt.files && fileTxt.files.length > 0;
+        if (!hasText && !hasFile) {
+          alert("Fournis un texte (zone) ou un fichier .txt.");
+          e.preventDefault();
+          return;
+        }
+        if (hasText && hasFile) {
+          alert("Une seule source texte : zone OU fichier .txt.");
+          e.preventDefault();
+          return;
+        }
+      }
+    });
+
+    // Init
+    setMode();
+    updateTextStats();
+  })();
+</script>
+{% endblock %}

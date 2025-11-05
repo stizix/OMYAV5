@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMYA.ai - Roadmap</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-slow': 'pulse 3s ease-in-out infinite',
+                        'spin-slow': 'spin 3s linear infinite',
+                        'glow': 'glow 2s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        },
+                        glow: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0.5' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen {% if user.is_authenticated %}user-authenticated{% endif %}">
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b border-slate-200/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <a href="/" class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                        OMYA.ai
+                    </a>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-8">
+                        <a href="/" class="text-slate-700 hover:text-blue-600 transition-colors duration-300">Accueil</a>
+                        <a href="/roadmap/" class="text-blue-600 font-semibold transition-colors duration-300">À venir</a>
+                        <a href="/#how-it-works" class="text-slate-700 hover:text-blue-600 transition-colors duration-300">Comment ça marche</a>
+                        <a href="/#pricing" class="text-slate-700 hover:text-blue-600 transition-colors duration-300">Tarifs</a>
+                        {% if user.is_authenticated %}
+                            <a href="/profile/" class="flex items-center space-x-2">
+                                {% if user.profile_picture %}
+                                    <img src="{{ user.profile_picture.url }}" alt="Profile" class="w-10 h-10 rounded-full object-cover border-2 border-blue-600">
+                                {% else %}
+                                    <i class="fas fa-user-circle text-3xl text-blue-600"></i>
+                                {% endif %}
+                            </a>
+                        {% else %}
+                            <a href="/login/" class="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-all duration-300 hover:shadow-lg">Connexion</a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-btn" class="text-slate-700 hover:text-blue-600">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white/95 backdrop-blur-md border-t border-slate-200/50">
+            <div class="px-2 pt-2 pb-3 space-y-1">
+                <a href="/" class="block px-3 py-2 text-slate-700 hover:text-blue-600">Accueil</a>
+                <a href="/roadmap/" class="block px-3 py-2 text-blue-600 font-medium">À venir</a>
+                <a href="/#how-it-works" class="block px-3 py-2 text-slate-700 hover:text-blue-600">Comment ça marche</a>
+                <a href="/#pricing" class="block px-3 py-2 text-slate-700 hover:text-blue-600">Tarifs</a>
+                {% if user.is_authenticated %}
+                    <a href="/profile/" class="flex items-center space-x-2 px-3 py-2 text-blue-600 font-medium">
+                        <i class="fas fa-user-circle text-2xl text-blue-600"></i>
+                        <span>Profil</span>
+                    </a>
+                {% else %}
+                    <a href="/login/" class="block px-3 py-2 text-blue-600 font-medium">Connexion</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto text-center">
+            <div class="animate-float mb-8">
+                <div class="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl shadow-2xl mb-8">
+                    <i class="fas fa-rocket text-white text-4xl"></i>
+                </div>
+            </div>
+            <h1 class="text-5xl md:text-7xl font-bold text-slate-900 mb-6 leading-tight">
+                🚀 Les prochaines 
+                <span class="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    fonctionnalités
+                </span>
+            </h1>
+            <p class="text-xl md:text-2xl text-slate-600 mb-12 max-w-3xl mx-auto leading-relaxed">
+                Découvre ce qui t'attend dans les mois à venir ! On bouscule pas mal de choses pour améliorer ton expérience d'apprentissage 🎓
+            </p>
+        </div>
+    </section>
+
+    <!-- Roadmap Content -->
+    <section class="pb-20 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <!-- Mobile App -->
+            <div class="mb-20">
+                <div class="bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-3xl p-8 md:p-12 border border-purple-200/50">
+                    <div class="flex items-start space-x-6 mb-8">
+                        <div class="w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-mobile-alt text-white text-3xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-4xl font-bold text-slate-900 mb-3">📱 Application Mobile</h2>
+                            <p class="text-lg text-slate-600">Enregistre directement tes cours depuis ton téléphone !</p>
+                        </div>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-white/50 backdrop-blur-sm rounded-2xl p-6 border border-purple-100">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <i class="fas fa-microphone text-2xl text-purple-600"></i>
+                                <h3 class="text-xl font-semibold text-slate-900">Enregistrement direct</h3>
+                            </div>
+                            <p class="text-slate-600">Enregistre tes cours directement depuis ton iPhone ou Android, sans avoir à transférer de fichiers. L'app fait tout pour toi !</p>
+                        </div>
+                        <div class="bg-white/50 backdrop-blur-sm rounded-2xl p-6 border border-purple-100">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <i class="fas fa-cloud-upload-alt text-2xl text-purple-600"></i>
+                                <h3 class="text-xl font-semibold text-slate-900">Upload automatique</h3>
+                            </div>
+                            <p class="text-slate-600">Tes enregistrements sont automatiquement uploadés et traités dès que tu termines d'enregistrer. Zéro effort requis !</p>
+                        </div>
+                        <div class="bg-white/50 backdrop-blur-sm rounded-2xl p-6 border border-purple-100">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <i class="fas fa-book text-2xl text-purple-600"></i>
+                                <h3 class="text-xl font-semibold text-slate-900">Lecture hors ligne</h3>
+                            </div>
+                            <p class="text-slate-600">Télécharge tes fiches de révision pour les lire hors ligne dans le métro, sans besoin d'internet. Parfait pour réviser partout !</p>
+                        </div>
+                        <div class="bg-white/50 backdrop-blur-sm rounded-2xl p-6 border border-purple-100">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <i class="fas fa-bell text-2xl text-purple-600"></i>
+                                <h3 class="text-xl font-semibold text-slate-900">Notifications intelligentes</h3>
+                            </div>
+                            <p class="text-slate-600">Reçois des rappels pour réviser tes cours, des suggestions de quiz et des tips d'étude personnalisés. Ton coach IA dans la poche !</p>
+                        </div>
+                    </div>
+                    <div class="mt-8 bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-purple-200">
+                        <div class="flex items-center space-x-3 text-purple-700">
+                            <i class="fas fa-calendar-alt text-2xl animate-pulse-slow"></i>
+                            <span class="font-semibold text-lg">Disponible dans 2-3 mois</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Professor -->
+            <div class="mb-20">
+                <div class="bg-gradient-to-br from-blue-500/10 to-indigo-500/10 rounded-3xl p-8 md:p-12 border border-blue-200/50">
+                    <div class="flex items-start space-x-6 mb-8">
+                        <div class="w-20 h-20 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-robot text-white text-3xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-4xl font-bold text-slate-900 mb-3">🤖 Professeur IA</h2>
+                            <p class="text-lg text-slate-600">Un assistant intelligent qui s'adapte à ton niveau d'apprentissage</p>
+                        </div>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-white/50 backdrop-blur-sm rounded-2xl p-6 border border-blue-100">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <i class="fas fa-comments text-2xl text-blue-600"></i>
+                                <h3 class="text-xl font-semibold text-slate-900">Chat interactif</h3>
+                            </div>
+                            <p class="text-slate-600">Pose toutes tes questions sur tes cours ! Le prof IA répond instantanément et s'adapte à ton niveau de compréhension.</p>
+                        </div>
+                        <div class="bg-white/50 backdrop-blur-sm rounded-2xl p-6 border border-blue-100">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <i class="fas fa-chart-line text-2xl text-blue-600"></i>
+                                <h3 class="text-xl font-semibold text-slate-900">Adaptation à ton niveau</h3>
+                            </div>
+                            <p class="text-slate-600">L'IA analyse tes performances et adapte ses explications à ton rythme. Un vrai prof qui suit ta progression !</p>
+                        </div>
+                        <div class="bg-white/50 backdrop-blur-sm rounded-2xl p-6 border border-blue-100">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <i class="fas fa-lightbulb text-2xl text-blue-600"></i>
+                                <h3 class="text-xl font-semibold text-slate-900">Explications détaillées</h3>
+                            </div>
+                            <p class="text-slate-600">Ne comprends pas un concept ? Le prof IA te l'explique avec des exemples concrets et des métaphores simples.</p>
+                        </div>
+                        <div class="bg-white/50 backdrop-blur-sm rounded-2xl p-6 border border-blue-100">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <i class="fas fa-dumbbell text-2xl text-blue-600"></i>
+                                <h3 class="text-xl font-semibold text-slate-900">Exercices personnalisés</h3>
+                            </div>
+                            <p class="text-slate-600">Reçois des exercices adaptés à tes points faibles. Le prof IA crée des quiz sur mesure pour tes lacunes.</p>
+                        </div>
+                    </div>
+                    <div class="mt-8 bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-blue-200">
+                        <div class="flex items-center space-x-3 text-blue-700">
+                            <i class="fas fa-calendar-alt text-2xl animate-pulse-slow"></i>
+                            <span class="font-semibold text-lg">Disponible dans 3-4 mois</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Dashboards -->
+            <div class="mb-20">
+                <div class="bg-gradient-to-br from-green-500/10 to-emerald-500/10 rounded-3xl p-8 md:p-12 border border-green-200/50">
+                    <div class="flex items-start space-x-6 mb-8">
+                        <div class="w-20 h-20 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-chart-bar text-white text-3xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-4xl font-bold text-slate-900 mb-3">📊 Dashboards Avancés</h2>
+                            <p class="text-lg text-slate-600">Visualise ta progression et tes performances en temps réel</p>
+                        </div>
+                    </div>
+                    <div class="grid md:grid-cols-3 gap-6">
+                        <div class="bg-white/50 backdrop-blur-sm rounded-2xl p-6 border border-green-100">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <i class="fas fa-signal text-2xl text-green-600"></i>
+                                <h3 class="text-xl font-semibold text-slate-900">Statistiques d'apprentissage</h3>
+                            </div>
+                            <p class="text-slate-600">Suis ton temps d'étude, tes scores aux quiz, et tes progrès sur chaque matière. Tout est tracké automatiquement !</p>
+                        </div>
+                        <div class="bg-white/50 backdrop-blur-sm rounded-2xl p-6 border border-green-100">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <i class="fas fa-trophy text-2xl text-green-600"></i>
+                                <h3 class="text-xl font-semibold text-slate-900">Badges et récompenses</h3>
+                            </div>
+                            <p class="text-slate-600">Débloque des badges en complétant tes cours et en réussissant les quiz. Gamifie ton apprentissage !</p>
+                        </div>
+                        <div class="bg-white/50 backdrop-blur-sm rounded-2xl p-6 border border-green-100">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <i class="fas fa-fire text-2xl text-green-600"></i>
+                                <h3 class="text-xl font-semibold text-slate-900">Streaks et habitudes</h3>
+                            </div>
+                            <p class="text-slate-600">Maintiens une série de jours consécutifs d'étude ! Construis de bonnes habitudes avec des notifications et des défis.</p>
+                        </div>
+                    </div>
+                    <div class="mt-8 bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-green-200">
+                        <div class="flex items-center space-x-3 text-green-700">
+                            <i class="fas fa-calendar-alt text-2xl animate-pulse-slow"></i>
+                            <span class="font-semibold text-lg">Disponible dans 2-3 mois</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Collaboration Features -->
+            <div class="mb-20">
+                <div class="bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-3xl p-8 md:p-12 border border-orange-200/50">
+                    <div class="flex items-start space-x-6 mb-8">
+                        <div class="w-20 h-20 bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-users text-white text-3xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-4xl font-bold text-slate-900 mb-3">👥 Équipes et Collaboration</h2>
+                            <p class="text-lg text-slate-600">Étudie en groupe et partage tes fiches avec tes potes</p>
+                        </div>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-white/50 backdrop-blur-sm rounded-2xl p-6 border border-orange-100">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <i class="fas fa-share-alt text-2xl text-orange-600"></i>
+                                <h3 class="text-xl font-semibold text-slate-900">Partage de fiches</h3>
+                            </div>
+                            <p class="text-slate-600">Partage tes fiches de révision avec tes camarades. Collabore sur des cours et entraidez-vous pour les examens.</p>
+                        </div>
+                        <div class="bg-white/50 backdrop-blur-sm rounded-2xl p-6 border border-orange-100">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <i class="fas fa-user-friends text-2xl text-orange-600"></i>
+                                <h3 class="text-xl font-semibold text-slate-900">Groupes d'étude</h3>
+                            </div>
+                            <p class="text-slate-600">Crée des groupes d'étude avec tes amis. Organisez des sessions de révision, comparez vos progrès et motivés-vous mutuellement.</p>
+                        </div>
+                        <div class="bg-white/50 backdrop-blur-sm rounded-2xl p-6 border border-orange-100">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <i class="fas fa-comment-dots text-2xl text-orange-600"></i>
+                                <h3 class="text-xl font-semibold text-slate-900">Commentaires en temps réel</h3>
+                            </div>
+                            <p class="text-slate-600">Commente les fiches des autres, pose des questions et aide tes potes à comprendre les concepts difficiles.</p>
+                        </div>
+                        <div class="bg-white/50 backdrop-blur-sm rounded-2xl p-6 border border-orange-100">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <i class="fas fa-users-cog text-2xl text-orange-600"></i>
+                                <h3 class="text-xl font-semibold text-slate-900">Équipes premium</h3>
+                            </div>
+                            <p class="text-slate-600">Pour les établissements scolaires. Tableaux de bord pour les profs, gestion d'équipes et analytics avancés.</p>
+                        </div>
+                    </div>
+                    <div class="mt-8 bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-orange-200">
+                        <div class="flex items-center space-x-3 text-orange-700">
+                            <i class="fas fa-calendar-alt text-2xl animate-pulse-slow"></i>
+                            <span class="font-semibold text-lg">Disponible dans 4-5 mois</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Features -->
+            <div class="mb-20">
+                <div class="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-3xl p-8 md:p-12 border border-indigo-200/50">
+                    <h2 class="text-3xl font-bold text-slate-900 mb-12 text-center">✨ Et plein d'autres trucs cool</h2>
+                    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-white/50 backdrop-blur-sm rounded-2xl p-6 border border-indigo-100 text-center">
+                            <i class="fas fa-language text-4xl text-indigo-600 mb-4"></i>
+                            <h3 class="text-lg font-semibold text-slate-900 mb-2">Multi-langues</h3>
+                            <p class="text-slate-600 text-sm">Support de plus de 50 langues</p>
+                        </div>
+                        <div class="bg-white/50 backdrop-blur-sm rounded-2xl p-6 border border-indigo-100 text-center">
+                            <i class="fas fa-video text-4xl text-indigo-600 mb-4"></i>
+                            <h3 class="text-lg font-semibold text-slate-900 mb-2">Vidéos</h3>
+                            <p class="text-slate-600 text-sm">Transcription de vidéos YouTube</p>
+                        </div>
+                        <div class="bg-white/50 backdrop-blur-sm rounded-2xl p-6 border border-indigo-100 text-center">
+                            <i class="fas fa-voice text-4xl text-indigo-600 mb-4"></i>
+                            <h3 class="text-lg font-semibold text-slate-900 mb-2">Reconnaissance vocale</h3>
+                            <p class="text-slate-600 text-sm">Transcription en direct</p>
+                        </div>
+                        <div class="bg-white/50 backdrop-blur-sm rounded-2xl p-6 border border-indigo-100 text-center">
+                            <i class="fas fa-magic text-4xl text-indigo-600 mb-4"></i>
+                            <h3 class="text-lg font-semibold text-slate-900 mb-2">Personnalisation</h3>
+                            <p class="text-slate-600 text-sm">Templates personnalisés</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CTA Section -->
+            <div class="text-center mb-12">
+                <div class="bg-gradient-to-r from-blue-600/20 to-indigo-600/20 backdrop-blur-sm rounded-3xl p-12 border border-blue-200/50">
+                    <h3 class="text-4xl font-bold text-slate-900 mb-4">Prêt à découvrir tout ça ? 🚀</h3>
+                    <p class="text-xl text-slate-600 mb-8 max-w-2xl mx-auto">
+                        Rejoins OMYA.ai maintenant et sois prêt quand ces fonctionnalités débarquent !
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        {% if not user.is_authenticated %}
+                        <a href="/signup/" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-2xl text-lg font-semibold hover:shadow-2xl hover:scale-105 transition-all duration-300 inline-flex items-center justify-center space-x-2">
+                            <span>Commencer gratuitement</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                        <a href="/#pricing" class="border-2 border-blue-600 text-blue-600 px-8 py-4 rounded-2xl text-lg font-semibold hover:bg-blue-50 transition-all duration-300 inline-flex items-center justify-center space-x-2">
+                            <span>Voir les tarifs</span>
+                            <i class="fas fa-tag"></i>
+                        </a>
+                        {% else %}
+                        <a href="/profile/" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-2xl text-lg font-semibold hover:shadow-2xl hover:scale-105 transition-all duration-300 inline-flex items-center justify-center space-x-2">
+                            <span>Accéder à mon profil</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gradient-to-br from-slate-900 to-blue-900 text-white py-12 px-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div class="col-span-2">
+                    <div class="text-2xl font-bold mb-4">OMYA.ai</div>
+                    <p class="text-slate-400 mb-4 max-w-md">
+                        Transforme tes cours en fiches de révision intelligentes avec la puissance de l'IA.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Produit</h4>
+                    <ul class="space-y-2 text-slate-400">
+                        <li><a href="/" class="hover:text-white">Accueil</a></li>
+                        <li><a href="/roadmap/" class="hover:text-white">Roadmap</a></li>
+                        <li><a href="/#pricing" class="hover:text-white">Tarifs</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Support</h4>
+                    <ul class="space-y-2 text-slate-400">
+                        <li><a href="mailto:hello@omya.ai" class="hover:text-white">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-slate-800 mt-8 pt-8 text-center text-slate-400">
+                <p>&copy; 2025 OMYA.ai. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        if (mobileMenuBtn && mobileMenu) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
+    });
+    </script>
+</body>
+</html>
+
