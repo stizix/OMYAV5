@@ -79,3 +79,5 @@ except Exception:
 STRIPE_PUBLIC_KEY = os.environ.get("STRIPE_PUBLIC_KEY", STRIPE_PUBLIC_KEY if "STRIPE_PUBLIC_KEY" in globals() else None)
 STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", STRIPE_SECRET_KEY if "STRIPE_SECRET_KEY" in globals() else "")
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", STRIPE_WEBHOOK_SECRET if "STRIPE_WEBHOOK_SECRET" in globals() else "")
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"  # allauth builds correct https links
